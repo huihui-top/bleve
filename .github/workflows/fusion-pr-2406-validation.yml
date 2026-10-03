@@ -1,0 +1,26 @@
+name: Fusion PR 2406 focused validation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fusion-race:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dc3fc76f074068dcd2bd0d243621ed1d47c0682a
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+      - name: Environment
+        run: |
+          go version
+          go env CGO_ENABLED CC
+      - name: Fusion race regression
+        run: go test -race ./fusion -count=1
+      - name: Parallel fixture and fusion race check
+        run: go test -race ./fusion -run '^$' -bench '^BenchmarkFusionPrepareAndFuseParallel$' -benchtime=16x -cpu=4
+      - name: Public FTS fusion paths under race detection
+        run: go test -race . -run '^TestFTS(RRF|RSF)' -count=1
